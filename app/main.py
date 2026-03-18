@@ -1,10 +1,8 @@
 """Main FastAPI application entrypoint for the messaging platform."""
 
 import logging
-import os
 
-from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI
 
 # Ensure app loggers output to console
 logging.basicConfig(
@@ -14,7 +12,6 @@ logging.basicConfig(
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import httpx
 
 from .config import settings
 from .db import create_db_and_tables, SessionLocal
@@ -96,45 +93,6 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router, tags=["dashboard"])
     app.include_router(campaigns.router, prefix="/api/campaigns", tags=["campaigns"])
     app.include_router(validation.router, prefix="/api/validation", tags=["validation"])
-
-    # ── Proxy /api/slik_link and /api/slik_send to Node.js bridge ──
-    NODE_BRIDGE = os.environ.get("NODE_BRIDGE_URL", "http://localhost:3000")
-
-    @app.api_route("/api/slik_link", methods=["GET"])
-    async def proxy_slik_link(request: Request):
-        """Proxy SSE stream from Node.js WhatsApp bridge."""
-        params = dict(request.query_params)
-        url = f"{NODE_BRIDGE}/api/slik_link"
-        client = httpx.AsyncClient(timeout=None)
-        req = client.build_request("GET", url, params=params)
-        resp = await client.send(req, stream=True)
-
-        async def stream():
-            try:
-                async for chunk in resp.aiter_bytes():
-                    yield chunk
-            finally:
-                await resp.aclose()
-                await client.aclose()
-
-        return StreamingResponse(
-            stream(),
-            status_code=resp.status_code,
-            headers={
-                "Content-Type": "text/event-stream",
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no",
-            },
-        )
-
-    @app.api_route("/api/slik_send", methods=["POST"])
-    async def proxy_slik_send(request: Request):
-        """Proxy message send to Node.js WhatsApp bridge."""
-        body = await request.json()
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(f"{NODE_BRIDGE}/api/slik_send", json=body)
-            return resp.json()
 
     # Static files and templates
     app.mount(

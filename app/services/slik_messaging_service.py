@@ -79,10 +79,11 @@ async def _send_via_slik(
     if not to_digits:
         return False, "invalid_phone"
 
-    # Call internal Vercel Node.js function
-    # Vercel provides internal networking, or we can use the relative path if hosted on same domain
-    # Use environment variable for base URL or default to local/relative
-    base_url = os.environ.get("VERCEL_URL", "http://localhost:3000")
+    # Call the Node.js WhatsApp bridge
+    # On Render: Node is the front server on PORT, FastAPI calls it via localhost
+    # On Vercel: uses VERCEL_URL
+    port = os.environ.get("PORT", "8000")
+    base_url = os.environ.get("VERCEL_URL", f"http://localhost:{port}")
     if not base_url.startswith("http"):
         base_url = f"https://{base_url}"
     

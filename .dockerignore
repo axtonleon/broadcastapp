@@ -1,0 +1,10 @@
+node_modules/
+slik-bridge/node_modules/
+__pycache__/
+.env
+.vercel/
+.git/
+data/*.db
+*.wses
+*.session
+tmp_*.txt

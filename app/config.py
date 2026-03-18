@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # Slik / WhatsApp Web (Baileys) — session folder under app/slik-session/
     SLIK_SESSION_DIR: Path = (
         Path("/tmp/slik-sessions")
-        if os.environ.get("VERCEL")
+        if os.environ.get("VERCEL") or os.environ.get("RENDER")
         else BASE_DIR / "app" / "slik-session"
     )
 

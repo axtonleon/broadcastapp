@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Contacts · Messaging Platform{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold mb-1">Upload Contacts</h2>
+    <p class="text-sm text-slate-400">
+      Import phone numbers and optional Telegram usernames from a CSV file for validation and messaging.
+    </p>
+  </div>
+
+  <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <form
+      action="/api/contacts/upload"
+      method="post"
+      enctype="multipart/form-data"
+      class="space-y-4"
+    >
+      <div>
+        <label
+          for="file"
+          class="block text-sm font-medium text-slate-200 mb-1"
+          >CSV file</label
+        >
+        <input
+          id="file"
+          name="file"
+          type="file"
+          accept=".csv,text/csv"
+          required
+          class="block w-full text-sm text-slate-100 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600 cursor-pointer bg-slate-900 border border-slate-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        />
+        <p class="mt-2 text-xs text-slate-500">
+          Expected columns: <span class="font-mono">phone_number</span> (required),
+          <span class="font-mono">telegram_username</span> (optional). UTF‑8 encoded.
+        </p>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <a
+          href="/"
+          class="text-xs text-slate-400 hover:text-slate-200"
+        >
+          ← Back to dashboard
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+        >
+          Upload CSV
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if summary %}
+  <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <h3 class="text-sm font-semibold mb-2">Import Summary</h3>
+    <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+      <div>
+        <dt class="text-xs text-slate-400">File</dt>
+        <dd class="text-slate-100 truncate">{{ summary.filename }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-emerald-300">Created</dt>
+        <dd class="text-emerald-200 font-semibold">{{ summary.created }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-amber-300">Duplicates</dt>
+        <dd class="text-amber-200 font-semibold">{{ summary.duplicates }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs text-rose-300">Invalid rows</dt>
+        <dd class="text-rose-200 font-semibold">{{ summary.invalid }}</dd>
+      </div>
+    </dl>
+    <p class="mt-3 text-xs text-slate-500">
+      Deduplication is based on normalized phone numbers. Advanced cleaning and username validation will be added in the
+      validation layer.
+    </p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+

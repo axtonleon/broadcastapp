@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>{% block title %}Messaging Platform{% endblock %}</title>
+    <!-- Tailwind via CDN for now -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div class="min-h-screen flex flex-col">
+      <header class="border-b border-slate-800 bg-slate-900/70 backdrop-blur">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 text-white font-bold">
+              T
+            </span>
+            <div>
+              <h1 class="text-lg font-semibold">Messaging Platform</h1>
+              <p class="text-xs text-slate-400">
+                Telegram &amp; WhatsApp — broadcast, validation, multi-account.
+              </p>
+            </div>
+          </div>
+          <nav class="flex gap-4 text-sm">
+            <a href="/" class="text-slate-300 hover:text-white">Dashboard</a>
+            <a href="/api/contacts/manage" class="text-slate-300 hover:text-white">Contacts</a>
+            <a href="/api/accounts/manage" class="text-slate-300 hover:text-white">Telegram</a>
+            <a href="/api/whatsapp-accounts/manage" class="text-slate-300 hover:text-green-300">WhatsApp</a>
+            <a href="/api/campaigns/manage" class="text-slate-300 hover:text-white">Campaigns</a>
+            <a href="/docs" class="text-slate-300 hover:text-white">API Docs</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="border-t border-slate-800 bg-slate-900/80">
+        <div class="max-w-6xl mx-auto px-4 py-3 text-xs text-slate-500 flex justify-between">
+          <span>Messaging Platform · Telegram &amp; WhatsApp · SQLite backend</span>
+          <span>FastAPI · Tailwind</span>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
+

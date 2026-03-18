@@ -1,0 +1,13 @@
+fastapi
+python-multipart
+uvicorn[standard]
+sqlalchemy
+sqlmodel
+python-dotenv
+jinja2
+alembic
+telethon
+pydantic-settings
+psycopg2-binary
+httpx
+twilio

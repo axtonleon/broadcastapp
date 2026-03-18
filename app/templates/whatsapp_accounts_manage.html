@@ -1,0 +1,383 @@
+{% extends "base.html" %} {% block title %}WhatsApp Accounts · Messaging
+Platform{% endblock %} {% block content %}
+<section class="space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold mb-1">
+      WhatsApp Accounts
+    </h2>
+    <p class="text-sm text-slate-400">
+      Use Twilio (official API) or Slik (WhatsApp Web sessions in app/slik-session/) to send bulk messages.
+    </p>
+  </div>
+
+  {% if success %}
+  <div
+    class="rounded-md border border-emerald-700 bg-emerald-900/40 px-4 py-3 text-xs text-emerald-100"
+  >
+    {{ success }}
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <h3 class="text-sm font-semibold mb-3">Add Twilio Account</h3>
+      {% if error %}
+      <p class="mb-3 text-xs text-rose-300">{{ error }}</p>
+      {% endif %}
+      <form
+        action="/api/whatsapp-accounts/manage"
+        method="post"
+        class="space-y-3"
+      >
+        <div>
+          <label
+            for="account_sid"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >Account SID</label
+          >
+          <input
+            id="account_sid"
+            name="account_sid"
+            type="text"
+            required
+            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          />
+        </div>
+        <div>
+          <label
+            for="auth_token"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >Auth Token</label
+          >
+          <input
+            id="auth_token"
+            name="auth_token"
+            type="password"
+            required
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          />
+        </div>
+        <div>
+          <label
+            for="from_number"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >WhatsApp Sender Number</label
+          >
+          <input
+            id="from_number"
+            name="from_number"
+            type="text"
+            required
+            placeholder="+14155238886 or whatsapp:+14155238886"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          />
+          <p class="mt-1 text-[11px] text-slate-500">
+            Sandbox: <span class="font-mono">+14155238886</span> · Or your
+            approved WhatsApp Business number.
+          </p>
+        </div>
+        <div>
+          <label
+            for="display_name"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >Display name (optional)</label
+          >
+          <input
+            id="display_name"
+            name="display_name"
+            type="text"
+            placeholder="Main WhatsApp sender"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          />
+        </div>
+        <div>
+          <label
+            for="daily_limit"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >Daily message limit</label
+          >
+          <input
+            id="daily_limit"
+            name="daily_limit"
+            type="number"
+            min="1"
+            value="1000"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+          />
+        </div>
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+          >
+            Save Account
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <h3 class="text-sm font-semibold mb-3">Configured Accounts</h3>
+      {% if accounts %}
+      <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {% for account in accounts %}
+        <div
+          class="flex items-center justify-between rounded-lg border border-slate-800/80 bg-slate-900/80 px-3 py-2"
+        >
+          <div>
+            <p class="text-sm font-medium">
+              {{ account.display_name or account.from_number }}
+            </p>
+            <p class="text-xs text-slate-400">
+              {{ account.from_number }} · Status:
+              <span
+                class="font-mono {% if account.status == 'active' %}text-green-400{% else %}text-slate-400{% endif %}"
+                >{{ account.status }}</span
+              >
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <p class="text-xs text-slate-300">
+                {{ account.sent_today }} / {{ account.daily_limit }}
+              </p>
+              <p class="text-[10px] text-slate-500">sent today</p>
+            </div>
+            <form
+              action="/api/whatsapp-accounts/{{ account.id }}/delete"
+              method="post"
+              onsubmit="return confirm('Delete this WhatsApp account?');"
+            >
+              <button
+                type="submit"
+                class="inline-flex items-center rounded-md bg-rose-600 px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-rose-700"
+              >
+                Delete
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-xs text-slate-500">
+        No WhatsApp accounts configured yet. Add your Twilio credentials to
+        enable WhatsApp messaging.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Slik (WhatsApp Web) section -->
+  <div class="mt-8 pt-6 border-t border-slate-700">
+    <h3 class="text-lg font-semibold mb-2">
+      Slik (WhatsApp Web)
+      <span class="ml-2 text-xs bg-amber-600 text-white px-2 py-0.5 rounded-full">Baileys</span>
+    </h3>
+    <p class="text-xs text-slate-400 mb-4">
+      Sessions from <code class="bg-slate-800 px-1 rounded">app/slik-session/</code>. Add a session, then click <strong>Link</strong> to show the QR code in the browser.
+    </p>
+
+    <!-- Setup steps -->
+    <div class="rounded-xl border border-amber-800/60 bg-amber-900/20 p-4 mb-4">
+      <h4 class="text-sm font-semibold text-amber-200 mb-3">Setup steps</h4>
+      <ol class="text-xs text-slate-300 space-y-2 list-decimal list-inside">
+        <li>Add a session below (choose from <code class="bg-slate-800 px-1 rounded">app/slik-session/</code> or create a folder there).</li>
+        <li>Run <code class="bg-slate-800 px-1 rounded">cd slik-bridge && npm install</code> once (from project root).</li>
+        <li>Click <strong>Link</strong> next to a session — QR code appears in a popup. Scan with WhatsApp → Linked Devices.</li>
+        <li>Use Slik when sending campaigns (choose "Slik" in the provider dropdown).</li>
+      </ol>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <h4 class="text-sm font-semibold mb-3">Restore Session (.wses)</h4>
+        <p class="text-[11px] text-slate-400 mb-4">
+          Upload a <span class="font-mono text-[10px]">.wses</span> file to restore a local session to the cloud.
+        </p>
+        <form
+          action="/api/slik-accounts/upload"
+          method="post"
+          enctype="multipart/form-data"
+          class="space-y-4"
+        >
+          <div class="flex items-center justify-center w-full">
+              <label for="wses_file" class="flex flex-col items-center justify-center w-full h-24 border border-slate-800 border-dashed rounded-lg cursor-pointer bg-slate-950/40 hover:bg-slate-950/60 transition-all">
+                  <div class="flex flex-col items-center justify-center py-2">
+                      <svg class="w-5 h-5 mb-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                      <p id="fileName" class="text-[10px] text-slate-500">Click to select</p>
+                  </div>
+                  <input id="wses_file" name="file" type="file" accept=".wses" class="hidden" onchange="document.getElementById('fileName').innerText = this.files[0].name" required />
+              </label>
+          </div>
+          <button
+            type="submit"
+            class="w-full rounded-md bg-emerald-500/80 py-2 text-xs font-semibold text-white hover:bg-emerald-600 transition-all"
+          >
+            Upload .wses
+          </button>
+        </form>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <h4 class="text-sm font-semibold mb-3">Add Slik Session</h4>
+        <form action="/api/slik-accounts/add" method="post" class="space-y-3">
+          <div>
+            <label for="session_id" class="block text-xs font-medium text-slate-300 mb-1">Session ID</label>
+            <select
+              id="session_id"
+              name="session_id"
+              required
+              class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            >
+              <option value="">-- Choose session --</option>
+              {% for s in available_sessions %}
+              <option value="{{ s }}">{{ s }}</option>
+              {% endfor %}
+            </select>
+            {% if not available_sessions %}
+            <p class="mt-1 text-[11px] text-amber-400">No sessions found. Place .wses files or create folders in app/slik-session/</p>
+            {% endif %}
+          </div>
+          <div>
+            <label for="slik_display_name" class="block text-xs font-medium text-slate-300 mb-1">Display name (optional)</label>
+            <input
+              id="slik_display_name"
+              name="display_name"
+              type="text"
+              placeholder="Session IL 326"
+              class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
+          </div>
+          <div>
+            <label for="slik_daily_limit" class="block text-xs font-medium text-slate-300 mb-1">Daily limit</label>
+            <input
+              id="slik_daily_limit"
+              name="daily_limit"
+              type="number"
+              min="1"
+              value="500"
+              class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
+          </div>
+          <button
+            type="submit"
+            class="inline-flex items-center rounded-md bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-700"
+          >
+            Add Slik Account
+          </button>
+        </form>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <h4 class="text-sm font-semibold mb-3">Slik Accounts</h4>
+        {% if slik_accounts %}
+        <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+          {% for acc in slik_accounts %}
+          <div class="rounded-lg border border-slate-800/80 bg-slate-900/80 px-3 py-2 space-y-1">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium">{{ acc.display_name or acc.session_id }}</p>
+                <p class="text-xs text-slate-400 font-mono">{{ acc.session_id }}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  onclick="openLinkModal('{{ acc.session_id }}')"
+                  class="inline-flex rounded-md bg-amber-600 px-2 py-1 text-xs font-semibold text-white hover:bg-amber-700"
+                >
+                  Link
+                </button>
+                <p class="text-xs text-slate-300">{{ acc.sent_today }} / {{ acc.daily_limit }}</p>
+                <form action="/api/slik-accounts/{{ acc.id }}/delete" method="post" onsubmit="return confirm('Delete this Slik account?');" class="inline">
+                  <button type="submit" class="inline-flex rounded-md bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700">Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-500">No Slik accounts. Add sessions from app/slik-session/ above.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Link Session Modal -->
+  <div id="linkModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70">
+    <div class="rounded-xl border border-slate-700 bg-slate-900 p-6 max-w-sm shadow-xl">
+      <h4 class="text-sm font-semibold mb-2">Link Session: <span id="linkModalSession" class="font-mono"></span></h4>
+      <p class="text-xs text-slate-400 mb-3">Scan with WhatsApp → Linked Devices</p>
+      <div id="linkModalContent" class="flex flex-col items-center min-h-[200px] justify-center">
+        <p id="linkModalStatus" class="text-xs text-slate-500">Connecting...</p>
+        <img id="linkModalQr" src="" alt="QR Code" class="hidden mt-2 max-w-[256px] h-auto bg-white p-2 rounded" />
+        <p id="linkModalError" class="hidden text-xs text-rose-400 mt-2"></p>
+      </div>
+      <button
+        type="button"
+        onclick="closeLinkModal()"
+        class="mt-4 w-full rounded-md bg-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-600"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function openLinkModal(sessionId) {
+      document.getElementById('linkModalSession').textContent = sessionId;
+      document.getElementById('linkModalStatus').textContent = 'Connecting...';
+      document.getElementById('linkModalStatus').classList.remove('hidden');
+      document.getElementById('linkModalQr').classList.add('hidden');
+      document.getElementById('linkModalQr').src = '';
+      document.getElementById('linkModalError').classList.add('hidden');
+      document.getElementById('linkModal').classList.remove('hidden');
+      document.getElementById('linkModal').classList.add('flex');
+
+      let linkSucceeded = false;
+      const es = new EventSource('/api/slik_link?session_id=' + encodeURIComponent(sessionId));
+      es.onmessage = function (e) {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.event === 'connecting') {
+            document.getElementById('linkModalStatus').textContent = data.message || 'Connecting...';
+          } else if (data.event === 'qr') {
+            document.getElementById('linkModalStatus').textContent = 'Scan this QR code';
+            const img = document.getElementById('linkModalQr');
+            img.src = 'data:image/png;base64,' + data.data;
+            img.classList.remove('hidden');
+          } else if (data.event === 'connected') {
+            linkSucceeded = true;
+            document.getElementById('linkModalStatus').textContent = 'Connected! Session saved.';
+            document.getElementById('linkModalQr').classList.add('hidden');
+            es.close();
+          } else if (data.event === 'error') {
+            document.getElementById('linkModalStatus').classList.add('hidden');
+            const errEl = document.getElementById('linkModalError');
+            errEl.textContent = data.message || 'Connection failed';
+            errEl.classList.remove('hidden');
+            es.close();
+          }
+        } catch (_) {}
+      };
+      es.onerror = function () {
+        es.close();
+        if (linkSucceeded) return;
+        document.getElementById('linkModalStatus').classList.add('hidden');
+        const errEl = document.getElementById('linkModalError');
+        errEl.textContent = 'Connection lost. Try again.';
+        errEl.classList.remove('hidden');
+      };
+      window._linkEventSource = es;
+    }
+    function closeLinkModal() {
+      if (window._linkEventSource) {
+        window._linkEventSource.close();
+        window._linkEventSource = null;
+      }
+      document.getElementById('linkModal').classList.add('hidden');
+      document.getElementById('linkModal').classList.remove('flex');
+    }
+  </script>
+</section>
+{% endblock %}

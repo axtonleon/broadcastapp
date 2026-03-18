@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Campaigns · Messaging Platform{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold mb-1">Campaigns</h2>
+    <p class="text-sm text-slate-400">
+      Define message content, choose a delivery channel (Telegram, WhatsApp, or Both), create campaigns, and send to all contacts.
+    </p>
+  </div>
+
+  {% if message %}
+  <div class="rounded-md border border-emerald-700 bg-emerald-900/40 px-4 py-3 text-xs text-emerald-100">
+    {{ message }}
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+      <h3 class="text-sm font-semibold">Create New Campaign</h3>
+      <p class="text-xs text-slate-400 mb-1">
+        Contacts in database: <span class="font-mono text-slate-100">{{ total_contacts }}</span>
+      </p>
+      <form action="/api/campaigns/manage/create" method="post" class="space-y-3">
+        <div>
+          <label for="name" class="block text-xs font-medium text-slate-300 mb-1">Campaign name</label>
+          <input id="name" name="name" type="text" required placeholder="Intro outreach batch #1"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label for="channel" class="block text-xs font-medium text-slate-300 mb-1">Delivery channel</label>
+          <select id="channel" name="channel"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <option value="telegram">📱 Telegram</option>
+            <option value="whatsapp">💬 WhatsApp</option>
+            <option value="both">🔀 Both (Telegram + WhatsApp)</option>
+          </select>
+          <p class="mt-1 text-[11px] text-slate-500">
+            "Both" creates two jobs per contact — one for each channel.
+          </p>
+        </div>
+        <div>
+          <label for="template_content" class="block text-xs font-medium text-slate-300 mb-1">Message content</label>
+          <textarea id="template_content" name="template_content" rows="6" required
+            placeholder="Hi, we tried reaching you about ..."
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
+          <p class="mt-1 text-[11px] text-slate-500">
+            Plain text for now — variables and personalization can be added later.
+          </p>
+        </div>
+        <div class="flex justify-end">
+          <button type="submit"
+            class="inline-flex items-center rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
+            Create &amp; Enqueue
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Existing Campaigns</h3>
+        <p class="text-[11px] text-slate-500">
+          Each send processes a batch of up to 20 pending jobs per channel.
+        </p>
+      </div>
+
+      {% if campaigns %}
+      <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {% for campaign in campaigns %}
+        <div class="rounded-lg border border-slate-800/80 bg-slate-900/80 px-3 py-2 space-y-1">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium">{{ campaign.name }}</p>
+              <p class="text-[11px] text-slate-400">
+                Status: <span class="font-mono">{{ campaign.status }}</span>
+                &nbsp;·&nbsp;
+                Channel:
+                {% if campaign.channel == 'telegram' %}
+                  <span class="text-indigo-300">📱 Telegram</span>
+                {% elif campaign.channel == 'whatsapp' %}
+                  <span class="text-green-300">💬 WhatsApp</span>
+                {% else %}
+                  <span class="text-amber-300">🔀 Both</span>
+                {% endif %}
+              </p>
+            </div>
+            <div class="flex gap-2 items-center flex-wrap">
+              <form action="/api/campaigns/{{ campaign.id }}/send" method="post" class="flex gap-2 items-center">
+                {% if campaign.channel in ['whatsapp', 'both'] and (has_twilio or has_slik) %}
+                <select name="whatsapp_provider" class="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-emerald-500">
+                  {% if has_twilio %}<option value="twilio">Twilio</option>{% endif %}
+                  {% if has_slik %}<option value="slik">Slik</option>{% endif %}
+                </select>
+                {% endif %}
+                <button type="submit"
+                  class="inline-flex items-center rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
+                  Send batch
+                </button>
+              </form>
+              <form action="/api/campaigns/{{ campaign.id }}/delete" method="post"
+                onsubmit="return confirm('Delete this campaign and all its jobs/logs?');">
+                <button type="submit"
+                  class="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
+                  Delete
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-xs text-slate-500">
+        No campaigns yet. Create your first campaign on the left.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

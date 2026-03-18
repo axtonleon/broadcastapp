@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Telegram Accounts · Messaging Platform{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold mb-1">Telegram Accounts</h2>
+    <p class="text-sm text-slate-400">
+      Configure multiple Telegram accounts for validation and messaging. Credentials are stored in your local database;
+      protect this environment and never share this page publicly.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <h3 class="text-sm font-semibold mb-3">Add New Account</h3>
+      {% if error %}
+      <p class="mb-3 text-xs text-rose-300">
+        {{ error }}
+      </p>
+      {% endif %}
+      <form
+        action="/api/accounts/manage"
+        method="post"
+        class="space-y-3"
+      >
+        <div>
+          <label
+            for="api_id"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >API ID</label
+          >
+          <input
+            id="api_id"
+            name="api_id"
+            type="number"
+            required
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label
+            for="api_hash"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >API Hash</label
+          >
+          <input
+            id="api_hash"
+            name="api_hash"
+            type="text"
+            required
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          <p class="mt-1 text-[11px] text-slate-500">
+            Obtain API ID and hash from the official Telegram
+            <span class="font-mono">my.telegram.org</span> portal.
+          </p>
+        </div>
+        <div>
+          <label
+            for="phone_number"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >Phone number</label
+          >
+          <input
+            id="phone_number"
+            name="phone_number"
+            type="text"
+            required
+            placeholder="+15550000001"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label
+            for="display_name"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >Display name (optional)</label
+          >
+          <input
+            id="display_name"
+            name="display_name"
+            type="text"
+            placeholder="Main outreach account"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label
+            for="daily_limit"
+            class="block text-xs font-medium text-slate-300 mb-1"
+            >Daily message limit</label
+          >
+          <input
+            id="daily_limit"
+            name="daily_limit"
+            type="number"
+            min="1"
+            value="1000"
+            class="block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          <p class="mt-1 text-[11px] text-slate-500">
+            Use conservative limits to protect account health; the worker will respect these limits.
+          </p>
+        </div>
+
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            class="inline-flex items-center rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+          >
+            Save Account
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <h3 class="text-sm font-semibold mb-3">Configured Accounts</h3>
+      {% if accounts %}
+      <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+        {% for account in accounts %}
+        <div class="flex items-center justify-between rounded-lg border border-slate-800/80 bg-slate-900/80 px-3 py-2">
+          <div class="flex-1">
+            <p class="text-sm font-medium">
+              {{ account.display_name or account.phone_number }}
+            </p>
+            <p class="text-xs text-slate-400">
+              {{ account.phone_number }} ·
+              <span class="{% if account.session_string %}text-emerald-400{% else %}text-amber-400{% endif %} font-mono text-[10px] uppercase tracking-wider">
+                {% if account.session_string %}Authorized{% else %}Needs Login{% endif %}
+              </span>
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-right hidden sm:block">
+              <p class="text-xs text-slate-300">
+                {{ account.sent_today }} / {{ account.daily_limit }}
+              </p>
+              <p class="text-[10px] text-slate-500">sent today</p>
+            </div>
+            <div class="flex items-center gap-1.5 pl-2 border-l border-slate-800">
+              <button
+                onclick="startLinking('{{ account.id }}', '{{ account.phone_number }}')"
+                class="rounded-md bg-slate-800 p-1.5 text-slate-300 hover:bg-indigo-500 hover:text-white transition-colors"
+                title="Link / Re-authorize"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+              </button>
+              <form action="/api/accounts/{{ account.id }}/delete" method="post" onsubmit="return confirm('Delete this account?')">
+                <button
+                  type="submit"
+                  class="rounded-md bg-slate-800 p-1.5 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors"
+                  title="Delete"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-xs text-slate-500">
+        No Telegram accounts configured yet. Add at least one account to begin validation and messaging.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Telegram Linking Modal -->
+<div id="linkModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+  <div class="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+    <div id="modalStep1" class="text-center">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 mb-4">
+        <svg class="h-6 w-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+      </div>
+      <h3 class="text-lg font-semibold text-white mb-2">Login to Telegram</h3>
+      <p class="text-sm text-slate-400 mb-6">
+        We'll send a verification code to <span id="linkPhone" class="text-slate-200 font-medium"></span> via the Telegram app.
+      </p>
+      <div class="flex flex-col gap-3">
+        <button id="sendCodeBtn" onclick="sendCode()" class="w-full rounded-lg bg-indigo-500 py-2.5 text-sm font-semibold text-white hover:bg-indigo-600 transition-colors">
+          Send Code
+        </button>
+        <button onclick="closeModal()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <div id="modalStep2" class="hidden">
+      <h3 class="text-lg font-semibold text-white mb-2 text-center">Enter Code</h3>
+      <p class="text-sm text-slate-400 mb-6 text-center">
+        Enter the 5-digit code sent to your Telegram account.
+      </p>
+      <div class="space-y-4">
+        <input
+          id="tgCode"
+          type="text"
+          placeholder="12345"
+          maxlength="5"
+          class="block w-full text-center tracking-[1em] font-mono rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-xl text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:tracking-normal placeholder:text-slate-700"
+        />
+        <button id="finishBtn" onclick="finishLinking()" class="w-full rounded-lg bg-indigo-500 py-2.5 text-sm font-semibold text-white hover:bg-indigo-600 transition-colors">
+          Verify & Link
+        </button>
+      </div>
+    </div>
+
+    <div id="modalLoading" class="hidden text-center py-8">
+      <div class="inline-block h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent mb-4"></div>
+      <p id="loadingMsg" class="text-sm text-slate-400">Requesting code...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentAccountId = null;
+
+  function startLinking(id, phone) {
+    currentAccountId = id;
+    document.getElementById('linkPhone').innerText = phone;
+    document.getElementById('linkModal').classList.remove('hidden');
+    document.getElementById('linkModal').classList.add('flex');
+    document.getElementById('modalStep1').classList.remove('hidden');
+    document.getElementById('modalStep2').classList.add('hidden');
+    document.getElementById('modalLoading').classList.add('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('linkModal').classList.add('hidden');
+    document.getElementById('linkModal').classList.remove('flex');
+  }
+
+  async function sendCode() {
+    showLoading('Sending code...');
+    try {
+      const resp = await fetch(`/api/accounts/${currentAccountId}/link/start`, { method: 'POST' });
+      const data = await resp.json();
+      if (data.status === 'code_sent') {
+        document.getElementById('modalLoading').classList.add('hidden');
+        document.getElementById('modalStep2').classList.remove('hidden');
+        document.getElementById('tgCode').focus();
+      } else {
+        alert('Error: ' + (data.message || 'Failed to send code'));
+        hideLoading();
+      }
+    } catch (e) {
+      alert('Error: ' + e);
+      hideLoading();
+    }
+  }
+
+  async function finishLinking() {
+    const code = document.getElementById('tgCode').value.trim();
+    if (!code) return;
+
+    showLoading('Verifying code...');
+    const formData = new FormData();
+    formData.append('code', code);
+
+    try {
+      const resp = await fetch(`/api/accounts/${currentAccountId}/link/finish`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await resp.json();
+      if (data.status === 'success') {
+        window.location.reload();
+      } else {
+        alert('Error: ' + (data.message || 'Verification failed'));
+        hideLoading();
+      }
+    } catch (e) {
+      alert('Error: ' + e);
+      hideLoading();
+    }
+  }
+
+  function showLoading(msg) {
+    document.getElementById('modalStep1').classList.add('hidden');
+    document.getElementById('modalStep2').classList.add('hidden');
+    document.getElementById('modalLoading').classList.remove('hidden');
+    document.getElementById('loadingMsg').innerText = msg;
+  }
+
+  function hideLoading() {
+      document.getElementById('modalLoading').classList.add('hidden');
+      if (document.getElementById('tgCode').value) {
+          document.getElementById('modalStep2').classList.remove('hidden');
+      } else {
+          document.getElementById('modalStep1').classList.remove('hidden');
+      }
+  }
+</script>
+{% endblock %}
+

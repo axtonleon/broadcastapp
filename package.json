@@ -1,0 +1,13 @@
+{
+  "name": "funtelapp-api",
+  "version": "1.0.0",
+  "main": "api/slik_link.js",
+  "type": "module",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "pino": "^9.0.0",
+    "qrcode": "^1.5.3",
+    "pg": "^8.11.3",
+    "adm-zip": "^0.5.10"
+  }
+}

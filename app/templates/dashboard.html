@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard · Messaging Platform{% endblock %}
+
+{% block content %}
+<section class="space-y-6">
+  <div>
+    <h2 class="text-xl font-semibold mb-1">Overview</h2>
+    <p class="text-sm text-slate-400">
+      High-level status of contacts, campaigns, and Telegram accounts.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Contacts</p>
+      <p class="text-2xl font-semibold">{{ total_contacts }}</p>
+      <p class="text-xs text-slate-500 mt-1">Total in database</p>
+    </div>
+
+    <div class="rounded-xl border border-emerald-900/60 bg-emerald-900/20 p-4">
+      <p class="text-xs uppercase tracking-wide text-emerald-300 mb-1">📱 Confirmed Telegram</p>
+      <p class="text-2xl font-semibold text-emerald-200">{{ confirmed_telegram }}</p>
+      <p class="text-xs text-emerald-300/80 mt-1">Validated or confirmed via messaging</p>
+    </div>
+
+    <div class="rounded-xl border border-green-900/60 bg-green-900/20 p-4">
+      <p class="text-xs uppercase tracking-wide text-green-300 mb-1">💬 Confirmed WhatsApp</p>
+      <p class="text-2xl font-semibold text-green-200">{{ confirmed_whatsapp }}</p>
+      <p class="text-xs text-green-300/80 mt-1">Validated or confirmed via Twilio</p>
+    </div>
+
+    <div class="rounded-xl border border-amber-900/60 bg-amber-900/20 p-4">
+      <p class="text-xs uppercase tracking-wide text-amber-300 mb-1">Unknown</p>
+      <p class="text-2xl font-semibold text-amber-200">{{ unknown_telegram }}</p>
+      <p class="text-xs text-amber-300/80 mt-1">Pending Telegram validation</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <h3 class="text-sm font-semibold mb-2">Message Queue</h3>
+      <dl class="grid grid-cols-3 gap-2 text-sm">
+        <div>
+          <dt class="text-xs text-slate-400">Pending</dt>
+          <dd class="text-lg font-semibold text-amber-200">{{ pending_jobs }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Sent</dt>
+          <dd class="text-lg font-semibold text-emerald-200">{{ sent_jobs }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Failed</dt>
+          <dd class="text-lg font-semibold text-rose-200">{{ failed_jobs }}</dd>
+        </div>
+      </dl>
+      <p class="mt-3 text-xs text-slate-500">
+        Queue and worker logic will classify messages as delivered, not Telegram, or privacy restricted.
+      </p>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-semibold">Telegram Accounts</h3>
+        <a
+          href="/docs#/accounts"
+          class="text-xs text-indigo-300 hover:text-indigo-200"
+        >
+          Manage via API
+        </a>
+      </div>
+      {% if accounts %}
+      <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+        {% for account in accounts %}
+        <div class="flex items-center justify-between rounded-lg border border-slate-800/80 bg-slate-900/80 px-3 py-2">
+          <div class="space-y-0.5">
+            <p class="text-sm font-medium">
+              {{ account.display_name or account.phone_number }}
+            </p>
+            <p class="text-xs text-slate-400">
+              Status: <span class="font-mono">{{ account.status }}</span>
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-slate-300">
+              {{ account.sent_today }} / {{ account.daily_limit }}
+            </p>
+            <p class="text-[10px] text-slate-500">
+              Messages sent today
+            </p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-xs text-slate-500">
+        No Telegram accounts configured yet. Use the <span class="font-mono">/api/accounts</span> endpoints to add
+        accounts.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-sm font-semibold">Validation &amp; Tools</h3>
+      <a
+        href="/docs"
+        class="text-xs text-indigo-300 hover:text-indigo-200"
+      >
+        Open API docs
+      </a>
+    </div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <p class="text-xs text-slate-400">
+        Run a quick Telegram validation pass for contacts with
+        <span class="font-mono">telegram_status="unknown"</span>.
+      </p>
+      <form
+        action="/api/validation/run-html"
+        method="post"
+      >
+        <button
+          type="submit"
+          class="inline-flex items-center rounded-md bg-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+        >
+          Validate unknown contacts
+        </button>
+      </form>
+    </div>
+    {% if validation_summary %}
+    <p class="mt-3 text-[11px] text-slate-400">
+      Validated <span class="font-mono">{{ validation_summary.validated }}</span> contacts using account
+      <span class="font-mono">{{ validation_summary.account_phone }}</span>. Remaining unknown:
+      <span class="font-mono">{{ validation_summary.remaining_unknown }}</span>.
+    </p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+

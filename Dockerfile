@@ -14,6 +14,8 @@ RUN cd slik-bridge && npm install --omit=dev
 # ── Stage 2: Final image with Python + Node ──
 FROM python:3.11-slim
 
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Install Node.js 20 (copies from node-base so we don't bloat with build tools)
 COPY --from=node-base /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-base /usr/local/lib/node_modules /usr/local/lib/node_modules

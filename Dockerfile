@@ -3,10 +3,10 @@ FROM node:20-slim AS node-base
 # ── Stage 1: Install Node dependencies ──
 WORKDIR /app
 COPY package.json ./
-RUN npm install --production
+RUN npm install --omit=dev
 
 COPY slik-bridge/package.json slik-bridge/package-lock.json ./slik-bridge/
-RUN cd slik-bridge && npm install --production
+RUN cd slik-bridge && npm install --omit=dev
 
 # ── Stage 2: Final image with Python + Node ──
 FROM python:3.11-slim

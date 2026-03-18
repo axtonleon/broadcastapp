@@ -1,5 +1,8 @@
 FROM node:20-slim AS node-base
 
+# git is needed by some npm packages (e.g. Baileys transitive deps)
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
 # ── Stage 1: Install Node dependencies ──
 WORKDIR /app
 COPY package.json ./
